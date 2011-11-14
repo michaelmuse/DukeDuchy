@@ -1,76 +1,113 @@
 /*
-The point of this program is to help you pick which card to choose to buy, in the game Dominion-Intrigue: a Duke or a Duchy. 
-There are 12 of each, and they cost the same amount to buy. 
-A Duchy is worth three points. A Duke is worth one point for each Duchy you have already bought.
+** Object-Oriented DuchyDuke
+**		by Arnaud Rouyer
+**
+** Usage:
+**	> var dd = new DuchyDuke(dukeStack, duchyStack);
+**	> dd.run(limit);
+**
+**
+** Arguments
+**	> dukeStack and duchyStack respectively represent the starting quantities of dukes and duchy. Default is 12 each.
+**
+**	> limit is explained with specific examples in the next paragraphs.
+**
+**
+** Specific changes:
+**	> The object is built from a function. In JavaScript, all functions are objects.
+**	  Objects can be assigned new properties (variables) and methods (functions) at runtime.
+**
+**	> Arguments. The function/object DuchyDuke can be called with arguments.
+**	  As they are non-mandatory (opposing C's behavious), we have to check their existence first.
+**
+**	> Ternaries. Ternaries everywhere. I just love ternaries.
+**	  Reminder about ternaries: ((exp a) ? (if a==true) : (else));
+**
+**	> Some code refactoring around the two "buy" functions. Plus a friendly turn-counter.
+**
+**	> The ending ternary-inception was just to mess your brain up. Never do this at home.
+**
+**	> Created a run() method. Thus, the code is now be run through:
+**		> var dd = new DuchyDuke(42,24);	//No execution
+**		> dd.run();							//Execution and output
+**
+**	> Going with the run(), limiting the number of iterations through run()'s argument.
+**		> var dd = new DuchyDuke(42,24);	//No execution
+**		> dd.run(3);						//Execution and output for only three iterations
+**
+**	> Going further down the run() madness, using a negative argument will mute the first rows.
+**		> var dd = new DuchyDuke(2,2);		//No execution
+**		> dd.run(-3);						//Will only output the last iteration
+**
+**	> The run() command returns a string with "(turn):(Duchy/Duke)_" for each iteration.
+**
+**/
 
-There are many other factors in the game, but lets isolate these two cards for the purposes of knowing which order to buy them in.
-This is difficult to do, because their values change depending on each other.
+function DuchyDuke(dukeStack, duchyStack)
+{
+	this.checkArgs = function(a, b) { return ((typeof a != 'undefined') ? a : b); }
 
-The first 3 times, you should buy a duchy, as they guarantee 3 points. On the 4th turn, its a push (both worth 3), so you can buy either. 
-Assuming in that turn, you decided to buy a 4th duchy, the next turn, dukes are now worth 4 - one more that a duchy.
-After you buy your first Duke, you may consider only buying dukes since they are worth 4 each and duchies are only worth 3, BUT: 
-Consider that buying a 5th Duchy on the 6th turn makes the Duke you already have worth 5, plus the 3 it adds - so it has also contributed 4, same as the duke. 
-The next turn, dukes are worth 5 but another duchy would only be worth 3+1 (because of the one Duke).
+	this.limit				= 'undefined';
+	this.turn				= 1;
+	this.duke				= 0;
+	this.duchy				= 0;
+	this.dukeLeft			= this.checkArgs(dukeStack,12);
+	this.duchyLeft			= this.checkArgs(duchyStack, 12);
+	this.dukeSingleVal		= 0;
+	this.duchySingleVal		= 0;
+	this.nextDukePoints		= 0;
+	this.nextDuchyPoints	= 0;
+	this.messageDuke		= '---------Buy a duke-----------------------------';
+	this.messageDuchy		= '---------Teach me, TEACHME how to duchy---------';
+	this.answer				= '';
 
-The problem is that you need to know how to optimize the total number of points you have by buying in the correct order. If you buy all of both piles of cards, it costs the same and nets the same result.
-However, the game can be ended before that happens, so its best to optimize each turn. 
-
-In order to do that, you need to keep track of how many you have of each and how much the next choice of each type will contribute.
-Theoretically, you could do try to remember the cards you have and do the math each time, but the goal is to identify an ideal buying pattern so you can focus on the rest of the game.
-This program should output that pattern into the Console.
-*/
-
-
-var duke = 0, //Start with 0 dukes - they are worth 1 point for each duchy you have
-		duchy = 0, //Start with 0 duchys - they are worth 3 points each
-		dukeLeft = 12, //Pile has 12 dukes
-		duchyLeft = 12, //Pile has 12 duchys
-		dukeSingleVal = 0, //Point value of a duke if you bought one now
-		duchySingleVal = 3, //Point value of a duchy if you bought one now
-		nextDukePoints= 0, //Point value added by the next duke you buy (this changes depending on the current number of Duchies)
-		nextDuchyPoints= 3; //Point value added by the next duchy you buy (this is 3 each time, until you have dukes which are also affected)
-
-function currentValue(){ //This decides how many points each card is worth to you
-	nextDuchyPoints = 3+(duke); //The next duchy gives you its 3, also making each Duke you have worth 1 more point
-	dukeSingleVal = nextDukePoints = duchy; //The next duke you buy as well as any current ones are always worth the same => the number of Duchys
-};
-
-function showTotals(){ //This gives you a summary to see how much your cards are worth
-	currentValue(); //This part is needed to make sure the current values are updated.
-	console.log ("Duchys: "+duchy); //Show how many Duchys you have currently
-	console.log ("Duchys Point Value: "+duchy*duchySingleVal); //Show how many points your Duchys are worth
-	console.log ("Dukes: "+duke); //Show how many Dukes you have currently
-	console.log ("Dukes Point Value: "+duke*dukeSingleVal); //Show how many points your Dukes are worth
-	console.log ("Total: "+(duke*dukeSingleVal+duchy*duchySingleVal)); //Show how many points your cards are worth overall
-};
-
-function buyDuchy(){ //Adds a Duchy to your cards, removes it from the pile, annouces the transaction, and shows the point summary
-	duchy++;
-	duchyLeft--;
-	console.log ("---------Teach me, TEACHME how to duchy---------");
-	showTotals();
-};
-
-function buyDuke(){ //Adds a Duke to your cards, removes it from the pile, annouces the transaction, and shows the point summary
-	duke++;
-	dukeLeft--;	
-	console.log ("---------Buy a duke-----------------------------");
-	showTotals();
-};
-
-while((dukeLeft+duchyLeft)>0){
-	currentValue(); //finds out how much each would be worth if picked next
-	if(dukeLeft===0) { //makes sure to only buy Duchys when the dukes run out
-		buyDuchy();
-	}
-	else if(duchyLeft===0){ //makes sure to only buy Dukes when the duchys run out
-		buyDuke();
-	}
-	else if(nextDuchyPoints > nextDukePoints) { //Picks which one is more valuable based on how much each would change your point total
-		buyDuchy();
-	}
-	else{
-		buyDuke();
+	this.showLogs = function(du) {
+		console.log('---------TURN '+this.turn);
+		console.log((du == 'duchy') ? this.messageDuchy : this.messageDuke);
+		console.log ("Duchys: "+this.duchy);
+		console.log ("Duchys Point Value: "+this.duchy*this.duchySingleVal);
+		console.log ("Dukes: "+this.duke);
+		console.log ("Dukes Point Value: "+this.duke*this.dukeSingleVal);
+		console.log ("Total: "+(this.duke*this.dukeSingleVal+this.duchy*this.duchySingleVal));
+	};
+	
+	this.buy = function(du) {
+		if (du == 'duchy') {
+			this.duchy++;
+			this.duchyLeft--;
+		} else if (du == 'duke') {
+			this.duke++;
+			this.dukeLeft--;
+		}
+		this.answer += this.turn + ':' + ((du == 'duchy') ? 'Duchy' : 'Duke') + '_';
+		this.nextDuchyPoints = 3 + (this.duke);
+		this.dukeSingleVal = this.nextDukePoints = this.duchy;
+		if (!(this.limit < 0)) {
+			this.showLogs(du);
+		}
+		this.turn++;
+	};
+	
+	this.run = function(limit) {
+		this.limit = limit;
+		while ((this.dukeLeft+this.duchyLeft) > 0) {
+			this.currentValue();
+			this.buy((this.dukeLeft == 0) ? 'duchy' :
+					 (this.duchyLeft == 0) ? 'duke' :
+					 (this.nextDuchyPoints > this.nextDukePoints) ? 'duchy' :
+					 'duke');
+			if (this.limit < 0) {
+				if (this.limit == -1) {
+					this.limit = 'undefined';
+				} else {
+					this.limit++;
+				}
+			} else if ((this.limit > 0) && (this.limit < this.turn)) {
+				console.log('Limit iteration '+this.limit+' reached. Now ending...');
+				return(this.answer);
+			}
+		};
+		console.log ("THE END! No more to buy!");
+		return(this.answer);
 	};
 };
-console.log ("No more to buy"); //When there are no cards left to buy, the program ends.
